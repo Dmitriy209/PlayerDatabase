@@ -16,7 +16,7 @@ namespace PlayerDatabase
 
     class PlayerDatabase
     {
-        private Dictionary<int, Player> _players = new Dictionary<int, Player>();
+        private List<Player> _players = new List<Player>();
         private int _lastPlayerId;
 
         public void Work()
@@ -82,114 +82,115 @@ namespace PlayerDatabase
             Console.WriteLine($"Всего в базе: {_players.Count} игроков.");
 
             foreach (var player in _players)
-            {
-                Console.Write($"{player.Key} - ");
-                player.Value.ShowStats();
-            }
+                player.ShowStats();
         }
 
         private void AddPlayer()
         {
-            string name = ReadInput();
-            int level = ReadInt();
+            string name = ReadName();
+            int level = ReadLevel();
+            int id = GetID();
 
-            _players.Add(GetID(), new Player(name, level));
+            _players.Add(new Player(id, name, level));
         }
 
         private int ReadInt()
         {
-            bool isRunning = true;
+            int number;
 
-            int level = 0;
+            while (int.TryParse(Console.ReadLine(), out number) == false)
+                Console.WriteLine("Это не число.");
 
-            while (isRunning)
+            return number;
+        }
+
+        private int ReadLevel()
+        {
+            int level;
+
+            do
             {
-                bool isInputFalse = false;
-
                 Console.WriteLine("Введите уровень:");
-                bool isLevel = int.TryParse(Console.ReadLine(), out level);
-
-                if (isLevel == false || level <= 0)
-                {
-                    Console.WriteLine("Это не уровень.");
-
-                    isInputFalse = true;
-                }
-
-                if (!isInputFalse)
-                    isRunning = false;
+                level = ReadInt();
             }
+            while (level <= 0);
 
             return level;
         }
 
-        private string ReadInput()
+        private string ReadName()
         {
-            bool isRunning = true;
-
-            string name = "";
-
-            while (isRunning)
-            {
-                bool isInputFalse = false;
-
-                Console.WriteLine("Введите имя персонажа:");
-                name = Console.ReadLine();
-
-                foreach (Player value in _players.Values)
-                {
-                    if (value.IsNameTaken(name))
-                    {
-                        Console.WriteLine("Персонаж с таким именем уже есть.");
-
-                        isInputFalse = true;
-                        break;
-                    }
-                }
-
-                if (!isInputFalse)
-                    isRunning = false;
-            }
+            Console.WriteLine("Введите имя персонажа:");
+            string name = Console.ReadLine();
 
             return name;
         }
 
         private void Ban()
         {
-            ShowAllPlayers();
+            if (IsDatabaseEmpty() == false)
+            {
+                ShowAllPlayers();
 
-            if (TryGetPlayer(out int id))
-                _players[id].Ban();
+                if (TryGetPlayer(out Player player))
+                    player.Ban();
+            }
         }
 
         private void Unban()
         {
-            ShowAllPlayers();
+            if (IsDatabaseEmpty() == false)
+            {
+                ShowAllPlayers();
 
-            if (TryGetPlayer(out int id))
-                _players[id].Unban();
+                if (TryGetPlayer(out Player player))
+                    player.Unban();
+            }
         }
 
         private void Delete()
         {
-            ShowAllPlayers();
+            if (IsDatabaseEmpty() == false)
+            {
+                ShowAllPlayers();
 
-            if (TryGetPlayer(out int id))
-                _players.Remove(id);
+                if (TryGetPlayer(out Player player))
+                    _players.Remove(player);
+            }
         }
 
-        private bool TryGetPlayer(out int id)
+        private bool TryGetPlayer(out Player player)
         {
+            player = null;
+
             Console.WriteLine("Введите идентификатор:");
             string userInput = Console.ReadLine();
 
-            int.TryParse(userInput, out id);
-            bool isId = _players.ContainsKey(id);
+            int.TryParse(userInput, out int id);
 
-            if (!isId)
-                Console.WriteLine("Это не идентификатор.");
+            foreach (var item in _players)
+            {
+                if (id == item.Id)
+                {
+                    player = item;
+                    return true;
+                }
+            }
 
-            return isId;
+            Console.WriteLine("Это не идентификатор.");
+
+            return false;
+        }
+
+        private bool IsDatabaseEmpty()
+        {
+            if (_players.Count == 0)
+            {
+                Console.WriteLine("База пуста.");
+                return true;
+            }
+
+            return false;
         }
 
         private int GetID()
@@ -204,16 +205,19 @@ namespace PlayerDatabase
         private int _level;
         private bool _isBanned;
 
-        public Player(string name, int level)
+        public Player(int id, string name, int level)
         {
+            Id = id;
             _name = name;
             _level = level;
             _isBanned = false;
         }
 
+        public int Id { get; private set; }
+
         public void ShowStats()
         {
-            Console.WriteLine($"{_name} - {_level} - {_isBanned}");
+            Console.WriteLine($"{Id} - {_name} - {_level} - {_isBanned}");
         }
 
         public bool Ban()
@@ -246,11 +250,6 @@ namespace PlayerDatabase
             }
 
             return _isBanned;
-        }
-
-        public bool IsNameTaken(string name)
-        {
-            return _name.ToLower() == name.ToLower();
         }
     }
 }
