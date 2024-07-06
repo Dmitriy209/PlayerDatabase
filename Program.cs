@@ -8,16 +8,16 @@ namespace PlayerDatabase
         static void Main(string[] args)
         {
             PlayerDatabase playerDatabase = new PlayerDatabase();
-            playerDatabase.Menu();
+            playerDatabase.ShowMenu();
         }
     }
 
     class PlayerDatabase
     {
         private Dictionary<int, Player> _players = new Dictionary<int, Player>();
-        private int _idPlayer;
+        private int _adtPlayerId;
 
-        public void Menu()
+        public void ShowMenu()
         {
             const string CommandShowAllPlayers = "1";
             const string CommandAdd = "2";
@@ -78,6 +78,7 @@ namespace PlayerDatabase
         private void ShowAllPlayers()
         {
             Console.WriteLine($"Всего в базе: {_players.Count} игроков.");
+
             foreach (var player in _players)
             {
                 Console.Write($"{player.Key} - ");
@@ -125,52 +126,43 @@ namespace PlayerDatabase
         {
             ShowAllPlayers();
 
-            ReturnValue().IsBan();
+            if (TryGetPlayer(out int id, out Player player))
+                player.IsBan();
         }
 
         private void Unban()
         {
             ShowAllPlayers();
 
-            ReturnValue().isUnban();
+            if (TryGetPlayer(out int id, out Player player))
+                player.isUnban();
         }
 
         private void Delete()
         {
             ShowAllPlayers();
 
-            _players.Remove(ReturnKey());
+            if (TryGetPlayer(out int id, out Player player))
+                _players.Remove(id);
         }
 
-        private void ReadPlayer(out int id, out Player value)
+        private bool TryGetPlayer(out int id, out Player player)
         {
             Console.WriteLine("Введите идентификатор:");
             string userInput = Console.ReadLine();
 
             int.TryParse(userInput, out id);
-            bool isId = _players.TryGetValue(id, out value);
+            bool isId = _players.TryGetValue(id, out player);
 
             if (isId == false)
                 Console.WriteLine("Это не идентификатор.");
-        }
 
-        private int ReturnKey()
-        {
-            ReadPlayer(out int key, out Player value);
-
-            return key;
-        }
-
-        private Player ReturnValue()
-        {
-            ReadPlayer(out int key, out Player value);
-
-            return value;
+            return isId;
         }
 
         private int GetID()
         {
-            return _idPlayer++;
+            return _adtPlayerId++;
         }
     }
 
@@ -201,6 +193,7 @@ namespace PlayerDatabase
             else
             {
                 Console.WriteLine("Игрок забанен.");
+
                 _isBanned = true;
             }
 
@@ -216,6 +209,7 @@ namespace PlayerDatabase
             else
             {
                 Console.WriteLine("Игрок разбанен.");
+
                 _isBanned = false;
             }
 
@@ -224,7 +218,7 @@ namespace PlayerDatabase
 
         public bool IsNameTaken(string name)
         {
-            return _name == name;
+            return _name.ToLower() == name.ToLower();
         }
     }
 }
