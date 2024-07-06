@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
+using System.Xml.Linq;
 
 namespace PlayerDatabase
 {
@@ -8,16 +10,16 @@ namespace PlayerDatabase
         static void Main(string[] args)
         {
             PlayerDatabase playerDatabase = new PlayerDatabase();
-            playerDatabase.ShowMenu();
+            playerDatabase.Work();
         }
     }
 
     class PlayerDatabase
     {
         private Dictionary<int, Player> _players = new Dictionary<int, Player>();
-        private int _adtPlayerId;
+        private int _lastPlayerId;
 
-        public void ShowMenu()
+        public void Work()
         {
             const string CommandShowAllPlayers = "1";
             const string CommandAdd = "2";
@@ -88,73 +90,103 @@ namespace PlayerDatabase
 
         private void AddPlayer()
         {
-            bool isInputFalse = false;
+            string name = ReadInput();
+            int level = ReadInt();
+
+            _players.Add(GetID(), new Player(name, level));
+        }
+
+        private int ReadInt()
+        {
+            bool isRunning = true;
 
             int level = 0;
 
-            Console.WriteLine("Введите имя персонажа:");
-            string name = Console.ReadLine();
-
-            foreach (Player value in _players.Values)
+            while (isRunning)
             {
-                if (value.IsNameTaken(name))
-                {
-                    Console.WriteLine("Персонаж с таким именем уже есть.");
+                bool isInputFalse = false;
 
-                    isInputFalse = true;
-                    break;
-                }
-            }
-
-            if (isInputFalse == false)
-            {
                 Console.WriteLine("Введите уровень:");
                 bool isLevel = int.TryParse(Console.ReadLine(), out level);
 
                 if (isLevel == false || level <= 0)
                 {
-                    isInputFalse = true;
                     Console.WriteLine("Это не уровень.");
+
+                    isInputFalse = true;
                 }
+
+                if (!isInputFalse)
+                    isRunning = false;
             }
 
-            if (isInputFalse == false)
-                _players.Add(GetID(), new Player(name, level));
+            return level;
+        }
+
+        private string ReadInput()
+        {
+            bool isRunning = true;
+
+            string name = "";
+
+            while (isRunning)
+            {
+                bool isInputFalse = false;
+
+                Console.WriteLine("Введите имя персонажа:");
+                name = Console.ReadLine();
+
+                foreach (Player value in _players.Values)
+                {
+                    if (value.IsNameTaken(name))
+                    {
+                        Console.WriteLine("Персонаж с таким именем уже есть.");
+
+                        isInputFalse = true;
+                        break;
+                    }
+                }
+
+                if (!isInputFalse)
+                    isRunning = false;
+            }
+
+            return name;
         }
 
         private void Ban()
         {
             ShowAllPlayers();
 
-            if (TryGetPlayer(out int id, out Player player))
-                player.IsBan();
+            if (TryGetPlayer(out int id))
+                _players[id].Ban();
         }
 
         private void Unban()
         {
             ShowAllPlayers();
 
-            if (TryGetPlayer(out int id, out Player player))
-                player.isUnban();
+            if (TryGetPlayer(out int id))
+                _players[id].Unban();
         }
 
         private void Delete()
         {
             ShowAllPlayers();
 
-            if (TryGetPlayer(out int id, out Player player))
+            if (TryGetPlayer(out int id))
                 _players.Remove(id);
         }
 
-        private bool TryGetPlayer(out int id, out Player player)
+        private bool TryGetPlayer(out int id)
         {
             Console.WriteLine("Введите идентификатор:");
             string userInput = Console.ReadLine();
 
             int.TryParse(userInput, out id);
-            bool isId = _players.TryGetValue(id, out player);
+            bool isId = _players.ContainsKey(id);
 
-            if (isId == false)
+            if (!isId)
                 Console.WriteLine("Это не идентификатор.");
 
             return isId;
@@ -162,7 +194,7 @@ namespace PlayerDatabase
 
         private int GetID()
         {
-            return _adtPlayerId++;
+            return _lastPlayerId++;
         }
     }
 
@@ -184,7 +216,7 @@ namespace PlayerDatabase
             Console.WriteLine($"{_name} - {_level} - {_isBanned}");
         }
 
-        public bool IsBan()
+        public bool Ban()
         {
             if (_isBanned == true)
             {
@@ -200,7 +232,7 @@ namespace PlayerDatabase
             return _isBanned;
         }
 
-        public bool isUnban()
+        public bool Unban()
         {
             if (_isBanned == false)
             {
