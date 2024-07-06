@@ -53,15 +53,15 @@ namespace PlayerDatabase
                         break;
 
                     case CommandBan:
-                        Ban();
+                        BanPlayer();
                         break;
 
                     case CommandUnban:
-                        Unban();
+                        UnbanPlayer();
                         break;
 
                     case CommandDelete:
-                        Delete();
+                        DeletePlayer();
                         break;
 
                     case CommandExit:
@@ -121,12 +121,10 @@ namespace PlayerDatabase
         private string ReadName()
         {
             Console.WriteLine("Введите имя персонажа:");
-            string name = Console.ReadLine();
-
-            return name;
+            return Console.ReadLine();
         }
 
-        private void Ban()
+        private void BanPlayer()
         {
             if (IsDatabaseEmpty() == false)
             {
@@ -137,7 +135,7 @@ namespace PlayerDatabase
             }
         }
 
-        private void Unban()
+        private void UnbanPlayer()
         {
             if (IsDatabaseEmpty() == false)
             {
@@ -148,7 +146,7 @@ namespace PlayerDatabase
             }
         }
 
-        private void Delete()
+        private void DeletePlayer()
         {
             if (IsDatabaseEmpty() == false)
             {
@@ -164,9 +162,7 @@ namespace PlayerDatabase
             player = null;
 
             Console.WriteLine("Введите идентификатор:");
-            string userInput = Console.ReadLine();
-
-            int.TryParse(userInput, out int id);
+            int id = ReadInt();
 
             foreach (var item in _players)
             {
@@ -220,9 +216,9 @@ namespace PlayerDatabase
             Console.WriteLine($"{Id} - {_name} - {_level} - {_isBanned}");
         }
 
-        public bool Ban()
+        public void Ban()
         {
-            if (_isBanned == true)
+            if (_isBanned)
             {
                 Console.WriteLine("Игрок уже забанен.");
             }
@@ -232,11 +228,9 @@ namespace PlayerDatabase
 
                 _isBanned = true;
             }
-
-            return _isBanned;
         }
 
-        public bool Unban()
+        public void Unban()
         {
             if (_isBanned == false)
             {
@@ -248,8 +242,6 @@ namespace PlayerDatabase
 
                 _isBanned = false;
             }
-
-            return _isBanned;
         }
     }
 }
